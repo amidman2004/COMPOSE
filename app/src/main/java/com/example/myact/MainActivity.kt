@@ -49,6 +49,7 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.sp
 import androidx.core.content.FileProvider
 import com.example.myact.JSON.DELETE
@@ -63,6 +64,12 @@ class MainActivity : ComponentActivity() {
     val urik = mutableStateOf<Uri?>(null)
     val select = registerForActivityResult(ActivityResultContracts.GetContent()){uri ->
         urik.value = uri
+    }
+    var uri:Uri? = null
+    val take = registerForActivityResult(ActivityResultContracts.TakePicture()){
+        if (it){
+            urik.value = uri
+        }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -205,11 +212,23 @@ class MainActivity : ComponentActivity() {
 
             }
             if (bol1.value == true){
+                var ed1 = remember {
+                    mutableStateOf(TextFieldValue())
+                }
+                var ed2 = remember {
+                    mutableStateOf(TextFieldValue())
+                }
+                var ed3 = remember {
+                    mutableStateOf(TextFieldValue())
+                }
+                var ed4 = remember {
+                    mutableStateOf(TextFieldValue())
+                }
                 AlertDialog(onDismissRequest = {bol1.value = false}, buttons = {
                     Box(
                         Modifier
                             .fillMaxWidth()
-                            .size(500.dp)){
+                            ){
                         Column(
                             modifier = Modifier.align(TopCenter)
                         ) {
@@ -223,21 +242,109 @@ class MainActivity : ComponentActivity() {
                                         .align(CenterHorizontally)
                                         .padding(top = 30.dp))
 
-                            }
 
+                            }else{
+                                Spacer(modifier = Modifier.size(180.dp,240.dp))
+                            }
+                            OutlinedTextField(value = ed1.value, onValueChange = {
+                                ed1.value = it
+                            },
+                                modifier = Modifier
+                                    .size(200.dp, 30.dp)
+                                    .align(CenterHorizontally),
+                            textStyle = TextStyle(color = Color.Black)
+                            )
+                            Spacer(modifier = Modifier.size(100.dp,10.dp))
+                            OutlinedTextField(value = ed2.value, onValueChange = {
+                                ed2.value = it
+                            },
+                                modifier = Modifier
+                                    .size(200.dp, 30.dp)
+                                    .align(CenterHorizontally),
+                                textStyle = TextStyle(color = Color.Black))
+                            Spacer(modifier = Modifier.size(100.dp,10.dp))
+                            OutlinedTextField(value = ed3.value, onValueChange = {
+                                ed3.value = it
+                            },
+                                modifier = Modifier
+                                    .size(200.dp, 30.dp)
+                                    .align(CenterHorizontally),
+                                textStyle = TextStyle(color = Color.Black))
+                            Spacer(modifier = Modifier.size(100.dp,10.dp))
+                            OutlinedTextField(value = ed4.value, onValueChange = {
+                                ed4.value = it
+
+                            },
+                                modifier = Modifier
+                                    .size(200.dp, 30.dp)
+                                    .align(CenterHorizontally),
+                                textStyle = TextStyle(color = Color.Black)
+                                    )
+                            Spacer(modifier = Modifier.size(20.dp,30.dp))
+                            Row(
+                                    Modifier
+                                        .align(CenterHorizontally)) {
+                                androidx.compose.material.Button(
+                                    onClick = { select.launch("image/*") },
+                                    modifier = androidx.compose.ui.Modifier
+                                        .size(120.dp, 40.dp),
+                                    colors = androidx.compose.material.ButtonDefaults.buttonColors(
+                                        androidx.compose.ui.graphics.Color.Blue
+                                    )
+                                )
+                                {
+                                    androidx.compose.material.Text(
+                                        text = "SELECT",
+                                        style = androidx.compose.ui.text.TextStyle(
+                                            color = androidx.compose.ui.graphics.Color.White,
+                                            fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
+                                        )
+                                    )
+                                }
+                                androidx.compose.material.Button(
+                                    onClick = {
+                                        val file = java.io.File(
+                                            filesDir,
+                                            java.util.UUID.randomUUID().toString() + ".jpg"
+                                        )
+                                        uri = androidx.core.content.FileProvider.getUriForFile(
+                                            applicationContext,
+                                            "com.example.myact.fileprovider",
+                                            file
+                                        )
+                                        take.launch(uri)
+                                    },
+                                    modifier = androidx.compose.ui.Modifier
+                                        .size(120.dp, 40.dp)
+                                        .padding(start = 20.dp),
+                                    colors = androidx.compose.material.ButtonDefaults.buttonColors(
+                                        androidx.compose.ui.graphics.Color.Blue
+                                    )
+                                )
+                                {
+                                    androidx.compose.material.Text(
+                                        text = "TAKE  ",
+                                        style = androidx.compose.ui.text.TextStyle(
+                                            color = androidx.compose.ui.graphics.Color.White,
+                                            fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
+                                        )
+                                    )
+                                }
+                            }
+                            Spacer(modifier = Modifier.size(30.dp))
+                            Button(onClick = { Toast.makeText(applicationContext, "IM WORK!", Toast.LENGTH_SHORT).show()},
+                                modifier = Modifier
+                                    .size(200.dp, 40.dp)
+                                    .align(CenterHorizontally)
+                                ,
+                                colors = ButtonDefaults.buttonColors(
+                                    backgroundColor = Color.Cyan
+                                )) {
+                                Text(text = "PUT",style = TextStyle(color = Color.White, fontSize = 16.sp))
+                            }
                         }
-                        Row() {
-                            
-                        }
-                        Button(onClick = { select.launch("image/*") },
-                            modifier = Modifier
-                                .padding(bottom = 50.dp)
-                                .align(BottomCenter)
-                                .size(200.dp, 40.dp),
-                            colors = ButtonDefaults.buttonColors(Color.Blue))
-                        {
-                            Text(text = "SELECT", style = TextStyle(color = Color.White, fontWeight = FontWeight.Bold))
-                        }
+
+
                     }
 
                 }
