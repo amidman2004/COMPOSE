@@ -1,14 +1,10 @@
 package com.example.myact
 
+import android.app.DatePickerDialog
 import android.os.Bundle
 import android.text.Layout
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.gestures.Orientation
-import androidx.compose.foundation.gestures.ScrollableState
-import androidx.compose.foundation.gestures.rememberScrollableState
-import androidx.compose.foundation.gestures.scrollable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -35,10 +31,11 @@ import android.graphics.*
 import android.net.Uri
 import android.provider.MediaStore
 import android.util.Base64
+import android.widget.CalendarView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.background
+import androidx.compose.foundation.*
+import androidx.compose.foundation.gestures.*
 import androidx.compose.material.*
 import androidx.compose.ui.Alignment.Companion.Bottom
 import androidx.compose.ui.Alignment.Companion.BottomCenter
@@ -49,6 +46,7 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.TextStyle
@@ -57,6 +55,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.FileProvider
 import androidx.vectordrawable.graphics.drawable.VectorDrawableCompat
 import com.example.myact.JSON.DELETE
@@ -255,7 +254,9 @@ class MainActivity : ComponentActivity() {
                             .fillMaxWidth()
                             ){
                         Column(
-                            modifier = Modifier.align(TopCenter)
+                            modifier = Modifier
+                                .align(TopCenter)
+                                .verticalScroll(rememberScrollState())
                         ) {
 
                             if (urik.value != null){
@@ -359,6 +360,45 @@ class MainActivity : ComponentActivity() {
                                 )
                                     )
                             Spacer(modifier = Modifier.size(20.dp,30.dp))
+
+                            val date = remember {
+                                mutableStateOf("BIRTHDATE")
+                            }
+                            val date1 = remember {
+                                mutableStateOf("DEADDATE")
+                            }
+                            val calendar = Calendar.getInstance()
+                            val datePickerDialog = DatePickerDialog(this@MainActivity,
+                                { view, year, month, day ->
+                                    date.value = "$day.$month.$year"
+                                },
+                                calendar.get(Calendar.YEAR),
+                                calendar.get(Calendar.MONTH),
+                                calendar.get(Calendar.DAY_OF_MONTH)
+                            )
+
+                            val datePickerDialog1 = DatePickerDialog(this@MainActivity,
+                                { view, year, month, day ->
+                                    date1.value = "$day.$month.$year"
+                                },
+                                calendar.get(Calendar.YEAR),
+                                calendar.get(Calendar.MONTH),
+                                calendar.get(Calendar.DAY_OF_MONTH)
+                            )
+
+                            Row(Modifier.align(CenterHorizontally)) {
+                                    Text(text = date.value, color = Color.Black,modifier =
+                                    Modifier.pointerInput(Unit){
+                                        detectTapGestures(onTap = {datePickerDialog.show()})
+                                    })
+                                Spacer(modifier = Modifier.size(20.dp))
+                                Text(text = date1.value, color = Color.Black, modifier =
+                                Modifier.pointerInput(Unit){
+                                    detectTapGestures(onTap = {datePickerDialog1.show()})
+                                })
+                            }
+                            Spacer(modifier = Modifier.size(30.dp))
+
                             Row(
                                     Modifier
                                         .align(CenterHorizontally)) {
@@ -408,8 +448,13 @@ class MainActivity : ComponentActivity() {
                                         )
                                     )
                                 }
+
                             }
-                            Spacer(modifier = Modifier.size(30.dp))
+
+
+
+                            Spacer(modifier = Modifier.size(20.dp))
+
                             Button(onClick = { Toast.makeText(applicationContext, "IM WORK!", Toast.LENGTH_SHORT).show()},
                                 modifier = Modifier
                                     .size(200.dp, 40.dp)
