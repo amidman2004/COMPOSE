@@ -44,6 +44,7 @@ import androidx.compose.ui.focus.focusModifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.painter.BitmapPainter
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
@@ -58,15 +59,19 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.FileProvider
 import androidx.vectordrawable.graphics.drawable.VectorDrawableCompat
+import com.bumptech.glide.load.resource.drawable.DrawableDecoderCompat
 import com.example.myact.JSON.DELETE
+import com.example.myact.JSON.POST
 import com.example.myact.ui.theme.Shapes
 import com.example.myact.ui.theme.moy
 import dev.chrisbanes.accompanist.glide.GlideImage
+import java.io.ByteArrayOutputStream
 import java.io.File
 import java.util.*
 
 var arraY :JSONArray? = null
 class MainActivity : ComponentActivity() {
+
     val urik = mutableStateOf<Uri?>(null)
     val select = registerForActivityResult(ActivityResultContracts.GetContent()){uri ->
         urik.value = uri
@@ -136,6 +141,7 @@ class MainActivity : ComponentActivity() {
                                 .fillMaxSize()
                                 .align(CenterHorizontally)){
                                 Row(modifier = Modifier.align(Center)) {
+                                    
                                     CircularProgressIndicator(modifier = Modifier.size(50.dp), color = Color.Blue)
                                     Spacer(modifier = Modifier.size(20.dp))
                                     Text(text = "Loading...", fontSize = 40.sp)
@@ -168,7 +174,7 @@ class MainActivity : ComponentActivity() {
 
 
     }
-    
+
     @Composable
     fun Chel(id:Int,name:String,name1:String,name2:String,image:ByteArray) {
         var bol0 = remember {
@@ -181,8 +187,14 @@ class MainActivity : ComponentActivity() {
             val bol1 = remember {
                 mutableStateOf(false)
             }
-            val a = BitmapFactory.decodeByteArray(image,0,image.size)
-            val b = a.asImageBitmap()
+            var a:Bitmap = BitmapFactory.decodeResource(resources,R.drawable.img)
+            var b = a.asImageBitmap()
+            val check = Base64.encodeToString(image,Base64.NO_WRAP)
+            if (check != "null"){
+                a = BitmapFactory.decodeByteArray(image,0,image.size)
+                b = a.asImageBitmap()
+            }
+
 
             Box(
                 Modifier
@@ -247,6 +259,7 @@ class MainActivity : ComponentActivity() {
                 var ed4 = remember {
                     mutableStateOf("")
                 }
+
                 AlertDialog(onDismissRequest = {bol1.value = false
                                                urik.value = null}, buttons = {
                     Box(
@@ -260,13 +273,37 @@ class MainActivity : ComponentActivity() {
                         ) {
 
                             if (urik.value != null){
+                                val size = remember {
+                                    mutableStateOf(240)
+                                }
                                 val sourse = ImageDecoder.createSource(contentResolver,urik.value!!)
                                 val image = ImageDecoder.decodeBitmap(sourse)
                                 Image(bitmap = image.asImageBitmap(),null,
                                     modifier = Modifier
-                                        .size(240.dp, 240.dp)
+                                        .size(240.dp)
                                         .align(CenterHorizontally)
-                                        .padding(top = 30.dp))
+                                        .padding(top = 30.dp)
+                                        .pointerInput(Unit) {
+                                            detectTapGestures(onTap = { select.launch("image/*") },
+                                                onLongPress = {
+                                                    urik.value = null
+                                                },
+                                                onDoubleTap = {
+                                                    val file = File(
+                                                        filesDir,
+                                                        UUID
+                                                            .randomUUID()
+                                                            .toString() + ".jpg"
+                                                    )
+                                                    uri = FileProvider.getUriForFile(
+                                                        applicationContext,
+                                                        "com.example.myact.fileprovider",
+                                                        file
+                                                    )
+                                                    take.launch(uri)
+                                                })
+                                        })
+
 
 
                             }else{
@@ -277,6 +314,23 @@ class MainActivity : ComponentActivity() {
                                     .fillMaxWidth()
                                     .align(CenterHorizontally)
                                     .background(Color.LightGray)
+                                    .pointerInput(Unit) {
+                                        detectTapGestures(onTap = { select.launch("image/*") },
+                                            onLongPress = {
+                                                val file = File(
+                                                    filesDir,
+                                                    UUID
+                                                        .randomUUID()
+                                                        .toString() + ".jpg"
+                                                )
+                                                uri = FileProvider.getUriForFile(
+                                                    applicationContext,
+                                                    "com.example.myact.fileprovider",
+                                                    file
+                                                )
+                                                take.launch(uri)
+                                            })
+                                    }
                                     ){
                                     Row(modifier = Modifier
                                         .align(Center)) {
@@ -362,15 +416,30 @@ class MainActivity : ComponentActivity() {
                             Spacer(modifier = Modifier.size(20.dp,30.dp))
 
                             val date = remember {
-                                mutableStateOf("BIRTHDATE")
+                                mutableStateOf("")
                             }
                             val date1 = remember {
-                                mutableStateOf("DEADDATE")
+                                mutableStateOf("")
+                            }
+                            var dateB = remember {
+                                mutableStateOf("")
+                            }
+                            var dateD = remember {
+                                mutableStateOf("")
                             }
                             val calendar = Calendar.getInstance()
                             val datePickerDialog = DatePickerDialog(this@MainActivity,
                                 { view, year, month, day ->
-                                    date.value = "$day.$month.$year"
+                                    var day0 = day.toString()
+                                    var month0 = month.toString()
+                                    when{
+                                        day<10 -> day0 = "0$day"
+                                        month<10 -> month0 = "0$month"
+                                    }
+
+                                    date.value = "$day0.$month0.$year"
+                                    dateB.value = "$year-$month0-$day0"
+
                                 },
                                 calendar.get(Calendar.YEAR),
                                 calendar.get(Calendar.MONTH),
@@ -379,7 +448,14 @@ class MainActivity : ComponentActivity() {
 
                             val datePickerDialog1 = DatePickerDialog(this@MainActivity,
                                 { view, year, month, day ->
-                                    date1.value = "$day.$month.$year"
+                                    var day0 = day.toString()
+                                    var month0 = month.toString()
+                                    when{
+                                        day<10 -> day0 = "0$day"
+                                        month<10 -> month0 = "0$month"
+                                    }
+                                    date1.value = "$day0.$month0.$year"
+                                    dateD.value = "$year-$month0-$day0"
                                 },
                                 calendar.get(Calendar.YEAR),
                                 calendar.get(Calendar.MONTH),
@@ -387,15 +463,35 @@ class MainActivity : ComponentActivity() {
                             )
 
                             Row(Modifier.align(CenterHorizontally)) {
-                                    Text(text = date.value, color = Color.Black,modifier =
-                                    Modifier.pointerInput(Unit){
+                                OutlinedTextField(value = date.value, onValueChange = {
+                                    date.value = it
+                                },modifier = Modifier
+                                    .pointerInput(Unit) {
+                                        detectTapGestures(onTap = { datePickerDialog.show() })
+                                    }
+                                    .width(120.dp),colors = TextFieldDefaults.outlinedTextFieldColors(
+                                    focusedBorderColor = Color.Blue,
+                                    unfocusedBorderColor = Color.Black,
+                                    cursorColor = Color.Black
+                                ), readOnly = true, label = { Text(text = "BirthDate", modifier = Modifier
+                                    .pointerInput(Unit){
                                         detectTapGestures(onTap = {datePickerDialog.show()})
-                                    })
+                                    })})
                                 Spacer(modifier = Modifier.size(20.dp))
-                                Text(text = date1.value, color = Color.Black, modifier =
-                                Modifier.pointerInput(Unit){
-                                    detectTapGestures(onTap = {datePickerDialog1.show()})
-                                })
+                                OutlinedTextField(value = date1.value, onValueChange = {
+                                       date1.value = it
+                                },modifier = Modifier
+                                    .pointerInput(Unit) {
+                                        detectTapGestures(onTap = { datePickerDialog1.show() })
+                                    }
+                                    .width(120.dp), colors = TextFieldDefaults.outlinedTextFieldColors(
+                                    focusedBorderColor = Color.Blue,
+                                    unfocusedBorderColor = Color.Black,
+                                    cursorColor = Color.Black
+                                ), readOnly = true,label = { Text(text = "DeadDate", modifier = Modifier
+                                    .pointerInput(Unit){
+                                        detectTapGestures(onTap = {datePickerDialog1.show()})
+                                    })})
                             }
                             Spacer(modifier = Modifier.size(30.dp))
 
@@ -455,7 +551,54 @@ class MainActivity : ComponentActivity() {
 
                             Spacer(modifier = Modifier.size(20.dp))
 
-                            Button(onClick = { Toast.makeText(applicationContext, "IM WORK!", Toast.LENGTH_SHORT).show()},
+                            val er1 = remember {
+                                mutableStateOf(false)
+                            }
+                            if (er1.value==true){
+                                errorDialog(mes = "Поле Surname не должно быть пустым")
+                            }
+
+                            val er2 = remember {
+                                mutableStateOf(false)
+                            }
+                            if (er2.value==true){
+                                errorDialog(mes = "Поле Name не должно быть пустым")
+                            }
+
+                            val er3 = remember {
+                                mutableStateOf(false)
+                            }
+                            if (er3.value==true){
+                                errorDialog(mes = "Поле 2nd Name не должно быть пустым")
+                            }
+
+                            Button(onClick = {
+                                             if (ed1.value == ""){
+                                                 er1.value  = true
+                                                 return@Button
+                                             }
+                                if (ed2.value == ""){
+                                    er2.value  = true
+                                    return@Button
+
+                                }
+                                if (ed3.value == ""){
+                                er3.value  = true
+                                return@Button
+                            }
+
+                                var string:String = "null"
+                            if (urik.value != null){
+                                val sourse = ImageDecoder.createSource(contentResolver,urik.value!!)
+                                val bitmaP = ImageDecoder.decodeBitmap(sourse)
+                                val stream = ByteArrayOutputStream()
+                                bitmaP.compress(Bitmap.CompressFormat.JPEG,10,stream)
+                                string = Base64.encodeToString(stream.toByteArray(),Base64.NO_WRAP)
+
+                            }
+                                POST.put(applicationContext,id,ed1.value,ed2.value,
+                                    ed3.value,ed4.value,dateB.value,dateD.value,string)
+                            },
                                 modifier = Modifier
                                     .size(200.dp, 40.dp)
                                     .align(CenterHorizontally)
@@ -510,11 +653,40 @@ class MainActivity : ComponentActivity() {
 
 
             }
+        }else{
+
         }
 
 
     }
 
+    @Composable
+    fun errorDialog(mes:String){
+        val close = remember {
+            mutableStateOf(true)
+        }
+        if (close.value == true){
+            AlertDialog(onDismissRequest = {close.value = false}, title = { Text(text = "ERROR")} ,buttons = {
+                    Column() {
+                        Spacer(modifier = Modifier.size(50.dp))
+                        Text(text = mes,modifier = Modifier.align(CenterHorizontally),
+                            fontSize = 16.sp)
+                        Spacer(modifier = Modifier.size(50.dp))
+                        Button(onClick = {close.value = false},
+                            Modifier
+                                .align(CenterHorizontally)
+                                .size(120.dp, 40.dp)
+                                .border(4.dp, Color.Black), colors = ButtonDefaults
+                                .buttonColors(
+                                    backgroundColor = Color.White
+                                )) {
+                            Text(text = "OK", fontSize = 16.sp, color = Color.Black)
+                        }
+                        Spacer(modifier = Modifier.size(40.dp))
+                }
+            })
+        }
+    }
 
 }
 
